@@ -69,7 +69,19 @@ populate: ## Popula o banco de dados com o plano de leitura (desenvolvimento)
 
 populate-prod: ## Popula o banco de dados com o plano de leitura (produção)
 	@echo "$(GREEN)Populating production database with reading plan...$(NC)"
-	docker compose $(PROD_PROFILE) exec backend-prod go run cmd/populate/main.go
+	@NETWORK=$$(docker inspect biblia_postgres --format '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' 2>/dev/null | head -1 || docker network ls --filter name=biblia --format '{{.Name}}' | grep network | head -1 || echo "biblia-am-pm_biblia-network"); \
+	docker run --rm \
+		--network $$NETWORK \
+		-v $$(pwd)/backend:/app \
+		-w /app \
+		--env-file backend/.env 2>/dev/null || true \
+		-e DB_HOST=postgres \
+		-e DB_PORT=$${DB_PORT:-5432} \
+		-e DB_USER=$${DB_USER:-postgres} \
+		-e DB_PASSWORD=$${DB_PASSWORD:-postgres} \
+		-e DB_NAME=$${DB_NAME:-biblia_db} \
+		golang:alpine \
+		sh -c "go mod download && go run cmd/populate/main.go"
 
 # Limpeza
 clean: ## Remove containers, volumes e imagens não utilizadas
