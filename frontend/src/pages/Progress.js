@@ -4,7 +4,7 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import './Progress.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
 const Progress = () => {
   const [progress, setProgress] = useState([]);
@@ -16,7 +16,7 @@ const Progress = () => {
   const fetchProgress = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/progress`, {
+      const response = await axios.get(`${API_URL}/progress`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

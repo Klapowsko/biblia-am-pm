@@ -85,7 +85,7 @@ services:
     env_file:
       - ./frontend/.env
     environment:
-      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8081}
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8081/api}
       PORT: ${PORT:-3000}
     volumes:
       - ./frontend:/app:z
@@ -102,13 +102,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-/api}
     container_name: biblia_frontend_prod
     ports:
       - "${FRONTEND_PORT:-3001}:80"
     env_file:
       - ./frontend/.env
-    environment:
-      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8081}
     depends_on:
       - backend-prod
     networks:

@@ -31,7 +31,7 @@ cp .env.development .env
 
 2. Inicie os serviços com Docker Compose (profile dev):
 ```bash
-docker-compose --profile dev up --build
+docker compose --profile dev up --build
 ```
 
 3. Acesse a aplicação:
@@ -48,7 +48,7 @@ cp .env.production .env
 
 2. Inicie os serviços com Docker Compose (profile prod):
 ```bash
-docker-compose --profile prod up --build
+docker compose --profile prod up --build
 ```
 
 ## Popular Banco de Dados
@@ -57,10 +57,10 @@ Para popular o banco de dados com o plano de leitura anual (365 dias):
 
 ```bash
 # Dentro do container do backend
-docker-compose exec backend go run cmd/populate/main.go
+docker compose exec backend go run cmd/populate/main.go
 
 # Ou para limpar e recriar
-docker-compose exec backend go run cmd/populate/main.go -clear
+docker compose exec backend go run cmd/populate/main.go -clear
 ```
 
 ## Endpoints da API

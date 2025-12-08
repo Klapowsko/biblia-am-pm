@@ -4,7 +4,7 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import './Dashboard.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
 const Dashboard = () => {
   const [readings, setReadings] = useState(null);
@@ -17,7 +17,7 @@ const Dashboard = () => {
   const fetchTodayReadings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/readings/today`, {
+      const response = await axios.get(`${API_URL}/readings/today`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -50,7 +50,7 @@ const Dashboard = () => {
     try {
       setMarking(true);
       const response = await axios.post(
-        `${API_URL}/api/readings/mark-completed`,
+        `${API_URL}/readings/mark-completed`,
         { period },
         {
           headers: {

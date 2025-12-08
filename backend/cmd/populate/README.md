@@ -8,10 +8,10 @@ Este script popula o banco de dados com o plano de leitura anual (365 dias).
 
 ```bash
 # Popular o banco
-docker-compose exec backend go run cmd/populate/main.go
+docker compose exec backend go run cmd/populate/main.go
 
 # Limpar e recriar todos os planos
-docker-compose exec backend go run cmd/populate/main.go -clear
+docker compose exec backend go run cmd/populate/main.go -clear
 ```
 
 ### Local
