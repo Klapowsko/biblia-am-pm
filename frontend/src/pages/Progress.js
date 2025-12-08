@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
@@ -13,16 +13,7 @@ const Progress = () => {
   const { token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    fetchProgress();
-  }, [token, navigate]);
-
-  const fetchProgress = async () => {
+  const fetchProgress = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/progress`, {
@@ -42,7 +33,16 @@ const Progress = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logout, navigate]);
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    fetchProgress();
+  }, [token, navigate, fetchProgress]);
 
   const getCompletedDays = () => {
     return progress.filter(

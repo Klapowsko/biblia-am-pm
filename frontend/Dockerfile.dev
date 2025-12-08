@@ -1,15 +1,25 @@
 FROM node:18-alpine
 
+# Use existing user with UID 1000 if it exists, otherwise create appuser
+# This ensures we use UID 1000 to match host user permissions
+RUN if ! getent passwd 1000 > /dev/null 2>&1; then \
+        GROUP_NAME=$(getent group 1000 | cut -d: -f1); \
+        adduser -D -u 1000 appuser $GROUP_NAME; \
+    fi
+
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY --chown=1000:1000 package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy source code
-COPY . .
+COPY --chown=1000:1000 . .
+
+# Keep as root - will be overridden by docker-compose if needed
+# USER 1000
 
 # Expose port
 EXPOSE 3000

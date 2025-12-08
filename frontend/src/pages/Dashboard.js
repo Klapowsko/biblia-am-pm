@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
@@ -14,16 +14,7 @@ const Dashboard = () => {
   const { token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    fetchTodayReadings();
-  }, [token, navigate]);
-
-  const fetchTodayReadings = async () => {
+  const fetchTodayReadings = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/readings/today`, {
@@ -43,7 +34,16 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logout, navigate]);
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    fetchTodayReadings();
+  }, [token, navigate, fetchTodayReadings]);
 
   const markAsCompleted = async (period) => {
     try {

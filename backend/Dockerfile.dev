@@ -1,17 +1,27 @@
 FROM golang:alpine
 
-WORKDIR /app
+# Use existing user with UID 1000 if it exists, otherwise create appuser
+# This ensures we use UID 1000 to match host user permissions
+RUN if ! getent passwd 1000 > /dev/null 2>&1; then \
+        GROUP_NAME=$(getent group 1000 | cut -d: -f1); \
+        adduser -D -u 1000 appuser $GROUP_NAME; \
+    fi
 
 # Install air for hot reload and build dependencies
 RUN apk add --no-cache git && \
     go install github.com/air-verse/air@latest
 
+WORKDIR /app
+
 # Copy go mod files and download dependencies
-COPY go.mod go.sum ./
+COPY --chown=1000:1000 go.mod go.sum ./
 RUN go mod download
 
 # Copy source code
-COPY . .
+COPY --chown=1000:1000 . .
+
+# Change to user with UID 1000 (appuser or existing user)
+USER 1000
 
 # Expose port
 EXPOSE 8080

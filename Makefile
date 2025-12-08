@@ -14,13 +14,19 @@ help: ## Mostra esta mensagem de ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}'
 
 # Desenvolvimento
-dev: build-dev up-dev ## Builda e sobe os containers em modo desenvolvimento
+dev: setup-env-dev build-dev up-dev ## Builda e sobe os containers em modo desenvolvimento
 
-build-dev: ## Builda as imagens Docker para desenvolvimento
+setup-env-dev: ## Configura arquivos .env para desenvolvimento
+	@echo "$(GREEN)Setting up development environment files...$(NC)"
+	@cp backend/.env.development backend/.env 2>/dev/null || true
+	@cp frontend/.env.development frontend/.env 2>/dev/null || true
+	@chmod -R u+rwX backend frontend 2>/dev/null || true
+
+build-dev: setup-env-dev ## Builda as imagens Docker para desenvolvimento
 	@echo "$(GREEN)Building development images...$(NC)"
 	docker-compose $(DEV_PROFILE) build
 
-up-dev: ## Sobe os containers em modo desenvolvimento
+up-dev: setup-env-dev ## Sobe os containers em modo desenvolvimento
 	@echo "$(GREEN)Starting development containers...$(NC)"
 	docker-compose $(DEV_PROFILE) up -d
 	@echo "$(GREEN)Containers started!$(NC)"
@@ -28,13 +34,19 @@ up-dev: ## Sobe os containers em modo desenvolvimento
 	@echo "$(YELLOW)Backend: http://localhost:8080$(NC)"
 
 # Produção
-prod: build-prod up-prod ## Builda e sobe os containers em modo produção
+prod: setup-env-prod build-prod up-prod ## Builda e sobe os containers em modo produção
 
-build-prod: ## Builda as imagens Docker para produção
+setup-env-prod: ## Configura arquivos .env para produção
+	@echo "$(GREEN)Setting up production environment files...$(NC)"
+	@cp backend/.env.production backend/.env 2>/dev/null || true
+	@cp frontend/.env.production frontend/.env 2>/dev/null || true
+	@chmod -R u+rwX backend frontend 2>/dev/null || true
+
+build-prod: setup-env-prod ## Builda as imagens Docker para produção
 	@echo "$(GREEN)Building production images...$(NC)"
 	docker-compose $(PROD_PROFILE) build
 
-up-prod: ## Sobe os containers em modo produção
+up-prod: setup-env-prod ## Sobe os containers em modo produção
 	@echo "$(GREEN)Starting production containers...$(NC)"
 	docker-compose $(PROD_PROFILE) up -d
 	@echo "$(GREEN)Containers started!$(NC)"

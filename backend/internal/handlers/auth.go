@@ -38,6 +38,10 @@ type AuthResponse struct {
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	if r.Method != http.MethodPost {
 		middleware.RespondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -94,6 +98,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	if r.Method != http.MethodPost {
 		middleware.RespondError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return

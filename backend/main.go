@@ -30,20 +30,21 @@ func main() {
 	// Setup router
 	r := mux.NewRouter()
 
-	// CORS middleware
+	// CORS middleware - apply to all routes
 	r.Use(corsMiddleware)
 
 	// Public routes
 	api := r.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST")
-	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
+	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
+	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST", "OPTIONS")
 
 	// Protected routes
 	protected := api.PathPrefix("").Subrouter()
+	protected.Use(corsMiddleware)
 	protected.Use(middleware.AuthMiddleware)
-	protected.HandleFunc("/readings/today", readingsHandler.GetTodayReadings).Methods("GET")
-	protected.HandleFunc("/readings/mark-completed", readingsHandler.MarkCompleted).Methods("POST")
-	protected.HandleFunc("/progress", readingsHandler.GetProgress).Methods("GET")
+	protected.HandleFunc("/readings/today", readingsHandler.GetTodayReadings).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/readings/mark-completed", readingsHandler.MarkCompleted).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/progress", readingsHandler.GetProgress).Methods("GET", "OPTIONS")
 
 	// Health check
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -64,9 +65,24 @@ func main() {
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := r.Header.Get("Origin")
+		allowedOrigins := []string{"http://localhost:3000", "http://localhost:3001"}
+		
+		// Allow origin if it's in the allowed list, otherwise use *
+		allowOrigin := "*"
+		if origin != "" {
+			for _, allowed := range allowedOrigins {
+				if origin == allowed {
+					allowOrigin = origin
+					break
+				}
+			}
+		}
+		
+		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+		w.Header().Set("Access-Control-Max-Age", "3600")
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
