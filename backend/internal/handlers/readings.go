@@ -5,6 +5,7 @@ import (
 	"biblia-am-pm/internal/models"
 	"biblia-am-pm/internal/repository"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,20 @@ type MarkCompletedRequest struct {
 	Period string `json:"period"` // "morning" or "evening"
 }
 
+// getLocalTime returns the current time in the configured timezone
+func getLocalTime() time.Time {
+	tz := os.Getenv("TZ")
+	if tz == "" {
+		tz = "America/Sao_Paulo" // Default timezone
+	}
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		// Fallback to UTC if timezone is invalid
+		loc = time.UTC
+	}
+	return time.Now().In(loc)
+}
+
 func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
 	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
@@ -40,7 +55,7 @@ func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
 		return
 	}
 
-	now := time.Now()
+	now := getLocalTime()
 	dayOfYear := now.YearDay()
 	hour := now.Hour()
 
@@ -112,7 +127,7 @@ func (h *ReadingsHandler) MarkCompleted(c *gin.Context) {
 		return
 	}
 
-	now := time.Now()
+	now := getLocalTime()
 	dayOfYear := now.YearDay()
 
 	// Get reading plan for today
