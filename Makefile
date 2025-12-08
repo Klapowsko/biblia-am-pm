@@ -70,6 +70,7 @@ populate: ## Popula o banco de dados com o plano de leitura (desenvolvimento)
 populate-prod: ## Popula o banco de dados com o plano de leitura (produção)
 	@echo "$(GREEN)Populating production database with reading plan...$(NC)"
 	@NETWORK=$$(docker inspect biblia_postgres --format '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' 2>/dev/null | head -1 || docker network ls --filter name=biblia --format '{{.Name}}' | grep network | head -1 || echo "biblia-am-pm_biblia-network"); \
+	echo "$(YELLOW)Using network: $$NETWORK$(NC)"; \
 	docker run --rm \
 		--network $$NETWORK \
 		-v $$(pwd)/backend:/app \
