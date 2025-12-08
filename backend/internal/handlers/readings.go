@@ -4,9 +4,10 @@ import (
 	"biblia-am-pm/internal/middleware"
 	"biblia-am-pm/internal/models"
 	"biblia-am-pm/internal/repository"
-	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ReadingsHandler struct {
@@ -32,15 +33,10 @@ type MarkCompletedRequest struct {
 	Period string `json:"period"` // "morning" or "evening"
 }
 
-func (h *ReadingsHandler) GetTodayReadings(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		middleware.RespondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID, err := middleware.GetUserIDFromContext(r)
+func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
-		middleware.RespondError(w, http.StatusUnauthorized, "Unauthorized")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
@@ -61,19 +57,19 @@ func (h *ReadingsHandler) GetTodayReadings(w http.ResponseWriter, r *http.Reques
 	// Get reading plan for today
 	plan, err := h.readingPlanRepo.GetByDayOfYear(dayOfYear)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to get reading plan")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get reading plan"})
 		return
 	}
 
 	if plan == nil {
-		middleware.RespondError(w, http.StatusNotFound, "Reading plan not found for today")
+		c.JSON(http.StatusNotFound, gin.H{"error": "Reading plan not found for today"})
 		return
 	}
 
 	// Get user progress for today
 	progress, err := h.userProgressRepo.GetByUserAndDate(userID, now)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to get progress")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get progress"})
 		return
 	}
 
@@ -95,29 +91,24 @@ func (h *ReadingsHandler) GetTodayReadings(w http.ResponseWriter, r *http.Reques
 		DayOfYear: dayOfYear,
 	}
 
-	middleware.RespondJSON(w, http.StatusOK, response)
+	c.JSON(http.StatusOK, response)
 }
 
-func (h *ReadingsHandler) MarkCompleted(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		middleware.RespondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID, err := middleware.GetUserIDFromContext(r)
+func (h *ReadingsHandler) MarkCompleted(c *gin.Context) {
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
-		middleware.RespondError(w, http.StatusUnauthorized, "Unauthorized")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	var req MarkCompletedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		middleware.RespondError(w, http.StatusBadRequest, "Invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	if req.Period != "morning" && req.Period != "evening" {
-		middleware.RespondError(w, http.StatusBadRequest, "Period must be 'morning' or 'evening'")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Period must be 'morning' or 'evening'"})
 		return
 	}
 
@@ -127,19 +118,19 @@ func (h *ReadingsHandler) MarkCompleted(w http.ResponseWriter, r *http.Request) 
 	// Get reading plan for today
 	plan, err := h.readingPlanRepo.GetByDayOfYear(dayOfYear)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to get reading plan")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get reading plan"})
 		return
 	}
 
 	if plan == nil {
-		middleware.RespondError(w, http.StatusNotFound, "Reading plan not found for today")
+		c.JSON(http.StatusNotFound, gin.H{"error": "Reading plan not found for today"})
 		return
 	}
 
 	// Get or create progress
 	progress, err := h.userProgressRepo.GetByUserAndDate(userID, now)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to get progress")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get progress"})
 		return
 	}
 
@@ -163,31 +154,26 @@ func (h *ReadingsHandler) MarkCompleted(w http.ResponseWriter, r *http.Request) 
 	// Save progress
 	err = h.userProgressRepo.CreateOrUpdate(progress)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to save progress")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save progress"})
 		return
 	}
 
-	middleware.RespondJSON(w, http.StatusOK, progress)
+	c.JSON(http.StatusOK, progress)
 }
 
-func (h *ReadingsHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		middleware.RespondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	userID, err := middleware.GetUserIDFromContext(r)
+func (h *ReadingsHandler) GetProgress(c *gin.Context) {
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
-		middleware.RespondError(w, http.StatusUnauthorized, "Unauthorized")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	progresses, err := h.userProgressRepo.GetUserProgress(userID)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to get progress")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get progress"})
 		return
 	}
 
-	middleware.RespondJSON(w, http.StatusOK, progresses)
+	c.JSON(http.StatusOK, progresses)
 }
 

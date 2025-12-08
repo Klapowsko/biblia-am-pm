@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 )
 
 func main() {

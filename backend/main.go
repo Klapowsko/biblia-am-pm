@@ -5,10 +5,10 @@ import (
 	"biblia-am-pm/internal/handlers"
 	"biblia-am-pm/internal/middleware"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -27,30 +27,38 @@ func main() {
 	authHandler := handlers.NewAuthHandler()
 	readingsHandler := handlers.NewReadingsHandler()
 
-	// Setup router
-	r := mux.NewRouter()
+	// Setup Gin router
+	r := gin.Default()
 
-	// CORS middleware - apply to all routes
-	r.Use(corsMiddleware)
-
-	// Public routes
-	api := r.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
-	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST", "OPTIONS")
-
-	// Protected routes
-	protected := api.PathPrefix("").Subrouter()
-	protected.Use(corsMiddleware)
-	protected.Use(middleware.AuthMiddleware)
-	protected.HandleFunc("/readings/today", readingsHandler.GetTodayReadings).Methods("GET", "OPTIONS")
-	protected.HandleFunc("/readings/mark-completed", readingsHandler.MarkCompleted).Methods("POST", "OPTIONS")
-	protected.HandleFunc("/progress", readingsHandler.GetProgress).Methods("GET", "OPTIONS")
+	// CORS middleware
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000", "http://localhost:3001"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	config.AllowHeaders = []string{"Content-Type", "Authorization", "X-Requested-With"}
+	config.AllowCredentials = true
+	r.Use(cors.New(config))
 
 	// Health check
-	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}).Methods("GET")
+	r.GET("/health", func(c *gin.Context) {
+		c.String(200, "OK")
+	})
+
+	// API routes
+	api := r.Group("/api")
+	{
+		// Public routes
+		api.POST("/auth/register", authHandler.Register)
+		api.POST("/auth/login", authHandler.Login)
+	}
+
+	// Protected routes - create separate group with auth middleware
+	protected := r.Group("/api")
+	protected.Use(middleware.AuthMiddleware())
+	{
+		protected.GET("/readings/today", readingsHandler.GetTodayReadings)
+		protected.POST("/readings/mark-completed", readingsHandler.MarkCompleted)
+		protected.GET("/progress", readingsHandler.GetProgress)
+	}
 
 	port := os.Getenv("API_PORT")
 	if port == "" {
@@ -58,40 +66,11 @@ func main() {
 	}
 
 	log.Printf("Server starting on port %s", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
 
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-		allowedOrigins := []string{"http://localhost:3000", "http://localhost:3001"}
-		
-		// Allow origin if it's in the allowed list, otherwise use *
-		allowOrigin := "*"
-		if origin != "" {
-			for _, allowed := range allowedOrigins {
-				if origin == allowed {
-					allowOrigin = origin
-					break
-				}
-			}
-		}
-		
-		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-		w.Header().Set("Access-Control-Max-Age", "3600")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
 
 func runMigrations() error {
 	migrationSQL := `

@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"biblia-am-pm/internal/middleware"
 	"biblia-am-pm/internal/repository"
-	"encoding/json"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -37,117 +36,99 @@ type AuthResponse struct {
 	User  interface{} `json:"user"`
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	if r.Method != http.MethodPost {
-		middleware.RespondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
+func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		middleware.RespondError(w, http.StatusBadRequest, "Invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	if req.Email == "" || req.Password == "" {
-		middleware.RespondError(w, http.StatusBadRequest, "Email and password are required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
 		return
 	}
 
 	// Check if user already exists
 	existingUser, err := h.userRepo.GetUserByEmail(req.Email)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to check user")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check user"})
 		return
 	}
 
 	if existingUser != nil {
-		middleware.RespondError(w, http.StatusConflict, "User already exists")
+		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		return
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to hash password")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
 	// Create user
 	user, err := h.userRepo.CreateUser(req.Email, string(hashedPassword))
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to create user")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
 
 	// Generate JWT token
 	token, err := generateToken(user.ID)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to generate token")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	middleware.RespondJSON(w, http.StatusCreated, AuthResponse{
+	c.JSON(http.StatusCreated, AuthResponse{
 		Token: token,
 		User:  user,
 	})
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	if r.Method != http.MethodPost {
-		middleware.RespondError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
+func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		middleware.RespondError(w, http.StatusBadRequest, "Invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	if req.Email == "" || req.Password == "" {
-		middleware.RespondError(w, http.StatusBadRequest, "Email and password are required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
 		return
 	}
 
 	// Get user by email
 	user, err := h.userRepo.GetUserByEmail(req.Email)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to get user")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
 		return
 	}
 
 	if user == nil {
-		middleware.RespondError(w, http.StatusUnauthorized, "Invalid credentials")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	// Check password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
-		middleware.RespondError(w, http.StatusUnauthorized, "Invalid credentials")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	// Generate JWT token
 	token, err := generateToken(user.ID)
 	if err != nil {
-		middleware.RespondError(w, http.StatusInternalServerError, "Failed to generate token")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
 	// Remove password from response
 	user.Password = ""
 
-	middleware.RespondJSON(w, http.StatusOK, AuthResponse{
+	c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
 		User:  user,
 	})

@@ -25,6 +25,7 @@ const Dashboard = () => {
       setReadings(response.data);
       setError('');
     } catch (err) {
+      console.error('Error fetching readings:', err);
       if (err.response?.status === 401) {
         logout();
         navigate('/login');
