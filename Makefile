@@ -63,9 +63,13 @@ logs: ## Mostra logs de todos os containers
 	docker compose $(DEV_PROFILE) logs -f
 
 # Banco de dados
-populate: ## Popula o banco de dados com o plano de leitura
+populate: ## Popula o banco de dados com o plano de leitura (desenvolvimento)
 	@echo "$(GREEN)Populating database with reading plan...$(NC)"
 	docker compose $(DEV_PROFILE) exec backend go run cmd/populate/main.go
+
+populate-prod: ## Popula o banco de dados com o plano de leitura (produção)
+	@echo "$(GREEN)Populating production database with reading plan...$(NC)"
+	docker compose $(PROD_PROFILE) exec backend-prod go run cmd/populate/main.go
 
 # Limpeza
 clean: ## Remove containers, volumes e imagens não utilizadas
