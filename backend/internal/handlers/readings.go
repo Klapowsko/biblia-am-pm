@@ -4,6 +4,7 @@ import (
 	"biblia-am-pm/internal/middleware"
 	"biblia-am-pm/internal/models"
 	"biblia-am-pm/internal/repository"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -45,7 +46,8 @@ func getLocalTime() time.Time {
 		// Fallback to UTC if timezone is invalid
 		loc = time.UTC
 	}
-	return time.Now().In(loc)
+	now := time.Now().In(loc)
+	return now
 }
 
 func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
@@ -58,6 +60,7 @@ func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
 	now := getLocalTime()
 	dayOfYear := now.YearDay()
 	hour := now.Hour()
+	minute := now.Minute()
 
 	// Determine period based on time
 	var period string
@@ -68,6 +71,13 @@ func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
 	} else {
 		period = "all"
 	}
+
+	// Debug: log current time and period
+	tz := os.Getenv("TZ")
+	if tz == "" {
+		tz = "America/Sao_Paulo"
+	}
+	log.Printf("[DEBUG] Timezone: %s, Current time: %s, Hour: %d, Period: %s", tz, now.Format("2006-01-02 15:04:05 MST"), hour, period)
 
 	// Get reading plan for today
 	plan, err := h.readingPlanRepo.GetByDayOfYear(dayOfYear)
