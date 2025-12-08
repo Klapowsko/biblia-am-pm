@@ -6,6 +6,7 @@ import (
 	"biblia-am-pm/internal/middleware"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -32,7 +33,23 @@ func main() {
 
 	// CORS middleware
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3001"}
+	// Get allowed origins from environment or use defaults
+	allowedOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if allowedOrigins == "" {
+		// Default origins: localhost and common server domains
+		config.AllowOrigins = []string{
+			"http://localhost:3001",
+			"http://hiagoserver.local:3001",
+			"http://hiagoserver.local",
+		}
+	} else {
+		// Parse comma-separated origins from environment
+		origins := []string{}
+		for _, origin := range strings.Split(allowedOrigins, ",") {
+			origins = append(origins, strings.TrimSpace(origin))
+		}
+		config.AllowOrigins = origins
+	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Content-Type", "Authorization", "X-Requested-With"}
 	config.AllowCredentials = true
