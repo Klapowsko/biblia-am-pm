@@ -35,8 +35,8 @@ docker-compose --profile dev up --build
 ```
 
 3. Acesse a aplicação:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8080
+   - Frontend: http://localhost:3001
+   - Backend API: http://localhost:8081
 
 ### Produção
 

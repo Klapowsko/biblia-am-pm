@@ -30,8 +30,8 @@ up-dev: setup-env-dev ## Sobe os containers em modo desenvolvimento
 	@echo "$(GREEN)Starting development containers...$(NC)"
 	docker-compose $(DEV_PROFILE) up -d
 	@echo "$(GREEN)Containers started!$(NC)"
-	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
-	@echo "$(YELLOW)Backend: http://localhost:8080$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:3001$(NC)"
+	@echo "$(YELLOW)Backend: http://localhost:8081$(NC)"
 
 # Produção
 prod: setup-env-prod build-prod up-prod ## Builda e sobe os containers em modo produção
@@ -50,8 +50,8 @@ up-prod: setup-env-prod ## Sobe os containers em modo produção
 	@echo "$(GREEN)Starting production containers...$(NC)"
 	docker-compose $(PROD_PROFILE) up -d
 	@echo "$(GREEN)Containers started!$(NC)"
-	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
-	@echo "$(YELLOW)Backend: http://localhost:8080$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:3001$(NC)"
+	@echo "$(YELLOW)Backend: http://localhost:8081$(NC)"
 
 # Gerenciamento
 down: ## Para e remove os containers
