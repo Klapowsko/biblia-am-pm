@@ -60,7 +60,6 @@ func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
 	now := getLocalTime()
 	dayOfYear := now.YearDay()
 	hour := now.Hour()
-	minute := now.Minute()
 
 	// Determine period based on time
 	var period string
