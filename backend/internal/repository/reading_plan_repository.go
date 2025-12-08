@@ -39,7 +39,14 @@ func (r *ReadingPlanRepository) GetByDayOfYear(dayOfYear int) (*models.ReadingPl
 
 func (r *ReadingPlanRepository) Create(plan *models.ReadingPlan) error {
 	query := `INSERT INTO reading_plans (day_of_year, old_testament_ref, new_testament_ref, psalms_ref, proverbs_ref) 
-	          VALUES ($1, $2, $3, $4, $5) RETURNING id`
+	          VALUES ($1, $2, $3, $4, $5)
+	          ON CONFLICT (day_of_year) 
+	          DO UPDATE SET 
+	            old_testament_ref = EXCLUDED.old_testament_ref,
+	            new_testament_ref = EXCLUDED.new_testament_ref,
+	            psalms_ref = EXCLUDED.psalms_ref,
+	            proverbs_ref = EXCLUDED.proverbs_ref
+	          RETURNING id`
 	
 	err := database.DB.QueryRow(query,
 		plan.DayOfYear,

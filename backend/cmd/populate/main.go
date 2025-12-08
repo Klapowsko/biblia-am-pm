@@ -30,59 +30,116 @@ func main() {
 		}
 	}
 
-	// Generate reading plan for 365 days
-	// This is a simplified version - you can expand this with actual Bible reading plan data
-	log.Println("Populating reading plans for 365 days...")
+	log.Println("Populating reading plans for 365 days following Bíblia 365 pattern...")
 
-	// Example structure: This is a placeholder - you'll need to populate with actual Bible references
-	// For now, creating a basic structure that cycles through books
-	oldTestamentBooks := []string{
-		"Gênesis", "Êxodo", "Levítico", "Números", "Deuteronômio",
-		"Josué", "Juízes", "Rute", "1 Samuel", "2 Samuel",
-		"1 Reis", "2 Reis", "1 Crônicas", "2 Crônicas", "Esdras",
-		"Neemias", "Ester", "Jó", "Salmos", "Provérbios",
-		"Eclesiastes", "Cantares", "Isaías", "Jeremias", "Lamentações",
-		"Ezequiel", "Daniel", "Oséias", "Joel", "Amós",
-		"Obadias", "Jonas", "Miquéias", "Naum", "Habacuque",
-		"Sofonias", "Ageu", "Zacarias", "Malaquias",
+	// Bíblia 365: 
+	// MANHÃ = Antigo Testamento + Salmos (ambos sequenciais)
+	// NOITE = Novo Testamento + Provérbios (ambos sequenciais)
+	// Quando Salmos ou Provérbios terminarem, reiniciam do capítulo 1
+
+	// Antigo Testamento (sem Salmos e Provérbios que são tratados separadamente)
+	oldTestamentBooks := []struct {
+		name     string
+		chapters int
+	}{
+		{"Gênesis", 50}, {"Êxodo", 40}, {"Levítico", 27}, {"Números", 36}, {"Deuteronômio", 34},
+		{"Josué", 24}, {"Juízes", 21}, {"Rute", 4}, {"1 Samuel", 31}, {"2 Samuel", 24},
+		{"1 Reis", 22}, {"2 Reis", 25}, {"1 Crônicas", 29}, {"2 Crônicas", 36}, {"Esdras", 10},
+		{"Neemias", 13}, {"Ester", 10}, {"Jó", 42},
+		{"Eclesiastes", 12}, {"Cantares", 8}, {"Isaías", 66}, {"Jeremias", 52}, {"Lamentações", 5},
+		{"Ezequiel", 48}, {"Daniel", 12}, {"Oséias", 14}, {"Joel", 3}, {"Amós", 9},
+		{"Obadias", 1}, {"Jonas", 4}, {"Miquéias", 7}, {"Naum", 3}, {"Habacuque", 3},
+		{"Sofonias", 3}, {"Ageu", 2}, {"Zacarias", 14}, {"Malaquias", 4},
 	}
 
-	newTestamentBooks := []string{
-		"Mateus", "Marcos", "Lucas", "João", "Atos",
-		"Romanos", "1 Coríntios", "2 Coríntios", "Gálatas", "Efésios",
-		"Filipenses", "Colossenses", "1 Tessalonicenses", "2 Tessalonicenses", "1 Timóteo",
-		"2 Timóteo", "Tito", "Filemom", "Hebreus", "Tiago",
-		"1 Pedro", "2 Pedro", "1 João", "2 João", "3 João",
-		"Judas", "Apocalipse",
+	// Novo Testamento
+	newTestamentBooks := []struct {
+		name     string
+		chapters int
+	}{
+		{"Mateus", 28}, {"Marcos", 16}, {"Lucas", 24}, {"João", 21}, {"Atos", 28},
+		{"Romanos", 16}, {"1 Coríntios", 16}, {"2 Coríntios", 13}, {"Gálatas", 6}, {"Efésios", 6},
+		{"Filipenses", 4}, {"Colossenses", 4}, {"1 Tessalonicenses", 5}, {"2 Tessalonicenses", 3}, {"1 Timóteo", 6},
+		{"2 Timóteo", 4}, {"Tito", 3}, {"Filemom", 1}, {"Hebreus", 13}, {"Tiago", 5},
+		{"1 Pedro", 5}, {"2 Pedro", 3}, {"1 João", 5}, {"2 João", 1}, {"3 João", 1},
+		{"Judas", 1}, {"Apocalipse", 22},
 	}
 
-	// Create a basic reading plan
-	// This is a simplified version - adjust based on your actual Bible 365 plan
+	// Calcular total de capítulos
+	totalOTChapters := 0
+	for _, book := range oldTestamentBooks {
+		totalOTChapters += book.chapters
+	}
+
+	totalNTChapters := 0
+	for _, book := range newTestamentBooks {
+		totalNTChapters += book.chapters
+	}
+
+	// Distribuir capítulos ao longo de 365 dias
+	// Manhã: AT sequencial + Salmos sequencial
+	// Noite: NT sequencial + Provérbios sequencial
+	otChaptersPerDay := float64(totalOTChapters) / 365.0
+	ntChaptersPerDay := float64(totalNTChapters) / 365.0
+
+	// Contadores para distribuição sequencial
+	otBookIndex := 0
+	otChapter := 1
+	otAccumulator := 0.0
+
+	ntBookIndex := 0
+	ntChapter := 1
+	ntAccumulator := 0.0
+
 	for day := 1; day <= 365; day++ {
-		// Distribute Old Testament readings (approximately 231 days)
 		var oldTestamentRef string
-		if day <= 231 {
-			bookIndex := (day - 1) % len(oldTestamentBooks)
-			chapter := ((day - 1) / len(oldTestamentBooks)) + 1
-			oldTestamentRef = fmt.Sprintf("%s %d", oldTestamentBooks[bookIndex], chapter)
-		}
-
-		// Distribute New Testament readings (approximately 89 days)
 		var newTestamentRef string
-		if day <= 89 {
-			bookIndex := (day - 1) % len(newTestamentBooks)
-			chapter := ((day - 1) / len(newTestamentBooks)) + 1
-			newTestamentRef = fmt.Sprintf("%s %d", newTestamentBooks[bookIndex], chapter)
-		}
-
-		// Psalms - read through once (150 chapters, ~150 days)
 		var psalmsRef string
-		if day <= 150 {
-			psalmsRef = fmt.Sprintf("Salmos %d", day)
+		var proverbsRef string
+
+		// MANHÃ: Antigo Testamento (sequencial)
+		otAccumulator += otChaptersPerDay
+		chaptersToRead := int(otAccumulator)
+		otAccumulator -= float64(chaptersToRead)
+
+		if chaptersToRead > 0 && otBookIndex < len(oldTestamentBooks) {
+			book := oldTestamentBooks[otBookIndex]
+			if otChapter <= book.chapters {
+				oldTestamentRef = fmt.Sprintf("%s %d", book.name, otChapter)
+				otChapter++
+				if otChapter > book.chapters {
+					otChapter = 1
+					otBookIndex++
+				}
+			}
 		}
 
-		// Proverbs - read through multiple times (31 chapters, cycle through)
-		proverbsRef := fmt.Sprintf("Provérbios %d", ((day-1)%31)+1)
+		// MANHÃ: Salmos (sequencial, reinicia quando terminar)
+		// Calcular baseado no dia do ano: (day - 1) % 150 + 1
+		psalmDay := ((day - 1) % 150) + 1
+		psalmsRef = fmt.Sprintf("Salmos %d", psalmDay)
+
+		// NOITE: Novo Testamento (sequencial)
+		ntAccumulator += ntChaptersPerDay
+		ntChaptersToRead := int(ntAccumulator)
+		ntAccumulator -= float64(ntChaptersToRead)
+
+		if ntChaptersToRead > 0 && ntBookIndex < len(newTestamentBooks) {
+			book := newTestamentBooks[ntBookIndex]
+			if ntChapter <= book.chapters {
+				newTestamentRef = fmt.Sprintf("%s %d", book.name, ntChapter)
+				ntChapter++
+				if ntChapter > book.chapters {
+					ntChapter = 1
+					ntBookIndex++
+				}
+			}
+		}
+
+		// NOITE: Provérbios (sequencial, reinicia quando terminar)
+		// Calcular baseado no dia do ano: (day - 1) % 31 + 1
+		proverbDay := ((day - 1) % 31) + 1
+		proverbsRef = fmt.Sprintf("Provérbios %d", proverbDay)
 
 		plan := &models.ReadingPlan{
 			DayOfYear:       day,
@@ -104,4 +161,3 @@ func main() {
 
 	log.Println("Reading plans populated successfully!")
 }
-
