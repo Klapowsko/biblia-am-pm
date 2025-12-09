@@ -7,7 +7,34 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 )
+
+// consumeChapters avança sequencialmente pelos capítulos e devolve uma string com as referências do dia.
+// Garante que, se precisarmos ler mais de um capítulo no mesmo dia, todos sejam listados.
+func consumeChapters(books []struct {
+	name     string
+	chapters int
+}, bookIndex *int, chapter *int, chaptersToRead int) string {
+	if chaptersToRead <= 0 || *bookIndex >= len(books) {
+		return ""
+	}
+
+	var refs []string
+
+	for i := 0; i < chaptersToRead && *bookIndex < len(books); i++ {
+		book := books[*bookIndex]
+		refs = append(refs, fmt.Sprintf("%s %d", book.name, *chapter))
+
+		*chapter++
+		if *chapter > book.chapters {
+			*chapter = 1
+			*bookIndex++
+		}
+	}
+
+	return strings.Join(refs, "; ")
+}
 
 func main() {
 	var clearFlag = flag.Bool("clear", false, "Clear existing reading plans before populating")
@@ -32,7 +59,7 @@ func main() {
 
 	log.Println("Populating reading plans for 365 days following Bíblia 365 pattern...")
 
-	// Bíblia 365: 
+	// Bíblia 365:
 	// MANHÃ = Antigo Testamento + Salmos (ambos sequenciais)
 	// NOITE = Novo Testamento + Provérbios (ambos sequenciais)
 	// Quando Salmos ou Provérbios terminarem, reiniciam do capítulo 1
@@ -102,17 +129,7 @@ func main() {
 		chaptersToRead := int(otAccumulator)
 		otAccumulator -= float64(chaptersToRead)
 
-		if chaptersToRead > 0 && otBookIndex < len(oldTestamentBooks) {
-			book := oldTestamentBooks[otBookIndex]
-			if otChapter <= book.chapters {
-				oldTestamentRef = fmt.Sprintf("%s %d", book.name, otChapter)
-				otChapter++
-				if otChapter > book.chapters {
-					otChapter = 1
-					otBookIndex++
-				}
-			}
-		}
+		oldTestamentRef = consumeChapters(oldTestamentBooks, &otBookIndex, &otChapter, chaptersToRead)
 
 		// MANHÃ: Salmos (sequencial, reinicia quando terminar)
 		// Calcular baseado no dia do ano: (day - 1) % 150 + 1
@@ -124,17 +141,7 @@ func main() {
 		ntChaptersToRead := int(ntAccumulator)
 		ntAccumulator -= float64(ntChaptersToRead)
 
-		if ntChaptersToRead > 0 && ntBookIndex < len(newTestamentBooks) {
-			book := newTestamentBooks[ntBookIndex]
-			if ntChapter <= book.chapters {
-				newTestamentRef = fmt.Sprintf("%s %d", book.name, ntChapter)
-				ntChapter++
-				if ntChapter > book.chapters {
-					ntChapter = 1
-					ntBookIndex++
-				}
-			}
-		}
+		newTestamentRef = consumeChapters(newTestamentBooks, &ntBookIndex, &ntChapter, ntChaptersToRead)
 
 		// NOITE: Provérbios (sequencial, reinicia quando terminar)
 		// Calcular baseado no dia do ano: (day - 1) % 31 + 1
