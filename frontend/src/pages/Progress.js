@@ -21,7 +21,8 @@ const Progress = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setProgress(response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setProgress(data);
       setError('');
     } catch (err) {
       if (err.response?.status === 401) {
