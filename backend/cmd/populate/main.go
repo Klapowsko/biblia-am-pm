@@ -5,35 +5,100 @@ import (
 	"biblia-am-pm/internal/models"
 	"biblia-am-pm/internal/repository"
 	"flag"
-	"fmt"
 	"log"
 	"strings"
 )
 
-// consumeChapters avança sequencialmente pelos capítulos e devolve uma string com as referências do dia.
-// Garante que, se precisarmos ler mais de um capítulo no mesmo dia, todos sejam listados.
-func consumeChapters(books []struct {
-	name     string
-	chapters int
-}, bookIndex *int, chapter *int, chaptersToRead int) string {
-	if chaptersToRead <= 0 || *bookIndex >= len(books) {
-		return ""
+// isOldTestament verifica se uma leitura é do Antigo Testamento
+// Nota: Salmos (Sl) e Provérbios (Pv) são tratados separadamente
+func isOldTestament(ref string) bool {
+	otBooks := []string{
+		"Gn", "Êx", "Lv", "Nm", "Dt", "Js", "Jz", "Rt", "1 Sm", "2 Sm",
+		"1 Rs", "2 Rs", "1 Cr", "2 Cr", "Ed", "Ne", "Et", "Jó", "Ec", "Ct",
+		"Is", "Jr", "Lm", "Ez", "Dn", "Os", "Jl", "Am", "Ob", "Jn",
+		"Mq", "Na", "Hc", "Sf", "Ag", "Zc", "Ml",
 	}
+	refUpper := strings.ToUpper(ref)
+	for _, book := range otBooks {
+		if strings.HasPrefix(refUpper, strings.ToUpper(book)) {
+			return true
+		}
+	}
+	return false
+}
 
-	var refs []string
+// isNewTestament verifica se uma leitura é do Novo Testamento
+func isNewTestament(ref string) bool {
+	ntBooks := []string{
+		"Mt", "Mc", "Lc", "Jo", "At", "Rm", "1 Co", "2 Co", "Gl", "Ef",
+		"Fp", "Cl", "1 Ts", "2 Ts", "1 Tm", "2 Tm", "Tt", "Fl", "Hb", "Tg",
+		"1 Pe", "2 Pe", "1 Jo", "2 Jo", "3 Jo", "Jd", "Ap",
+	}
+	refUpper := strings.ToUpper(ref)
+	for _, book := range ntBooks {
+		if strings.HasPrefix(refUpper, strings.ToUpper(book)) {
+			return true
+		}
+	}
+	return false
+}
 
-	for i := 0; i < chaptersToRead && *bookIndex < len(books); i++ {
-		book := books[*bookIndex]
-		refs = append(refs, fmt.Sprintf("%s %d", book.name, *chapter))
+// isPsalms verifica se uma leitura é de Salmos
+func isPsalms(ref string) bool {
+	refUpper := strings.ToUpper(ref)
+	return strings.HasPrefix(refUpper, "SL") || strings.HasPrefix(refUpper, "SALMOS")
+}
 
-		*chapter++
-		if *chapter > book.chapters {
-			*chapter = 1
-			*bookIndex++
+// isProverbs verifica se uma leitura é de Provérbios
+func isProverbs(ref string) bool {
+	refUpper := strings.ToUpper(ref)
+	return strings.HasPrefix(refUpper, "PV") || strings.HasPrefix(refUpper, "PROVÉRBIOS")
+}
+
+// mapRMMToHybrid mapeia as 4 leituras do RMM para a estrutura híbrida (manhã/noite)
+func mapRMMToHybrid(rmmDay RMMDay) (oldTestamentRef, psalmsRef, newTestamentRef, proverbsRef string) {
+	var otReadings []string
+	var ntReadings []string
+	var psalmsReading string
+	var proverbsReading string
+
+	// Analisar cada leitura
+	readings := []string{rmmDay.Reading1, rmmDay.Reading2, rmmDay.Reading3, rmmDay.Reading4}
+	
+	for _, reading := range readings {
+		if reading == "" {
+			continue
+		}
+		
+		if isPsalms(reading) {
+			psalmsReading = reading
+		} else if isProverbs(reading) {
+			proverbsReading = reading
+		} else if isOldTestament(reading) {
+			otReadings = append(otReadings, reading)
+		} else if isNewTestament(reading) {
+			ntReadings = append(ntReadings, reading)
 		}
 	}
 
-	return strings.Join(refs, "; ")
+	// Agrupar leituras
+	oldTestamentRef = strings.Join(otReadings, "; ")
+	if oldTestamentRef == "" {
+		oldTestamentRef = ""
+	}
+
+	psalmsRef = psalmsReading
+
+	// Para NT, usar a primeira leitura encontrada (geralmente Reading2)
+	if len(ntReadings) > 0 {
+		newTestamentRef = ntReadings[0]
+	} else {
+		newTestamentRef = ""
+	}
+
+	proverbsRef = proverbsReading
+
+	return oldTestamentRef, psalmsRef, newTestamentRef, proverbsRef
 }
 
 func main() {
@@ -57,96 +122,21 @@ func main() {
 		}
 	}
 
-	log.Println("Populating reading plans for 365 days following Bíblia 365 pattern...")
+	log.Println("Populating reading plans for 365 days following Robert Murray M'Cheyne plan...")
 
-	// Bíblia 365:
-	// MANHÃ = Antigo Testamento + Salmos (ambos sequenciais)
-	// NOITE = Novo Testamento + Provérbios (ambos sequenciais)
-	// Quando Salmos ou Provérbios terminarem, reiniciam do capítulo 1
+	// Carregar plano RMM
+	rmmPlan := getRMMPlan()
 
-	// Antigo Testamento (sem Salmos e Provérbios que são tratados separadamente)
-	oldTestamentBooks := []struct {
-		name     string
-		chapters int
-	}{
-		{"Gênesis", 50}, {"Êxodo", 40}, {"Levítico", 27}, {"Números", 36}, {"Deuteronômio", 34},
-		{"Josué", 24}, {"Juízes", 21}, {"Rute", 4}, {"1 Samuel", 31}, {"2 Samuel", 24},
-		{"1 Reis", 22}, {"2 Reis", 25}, {"1 Crônicas", 29}, {"2 Crônicas", 36}, {"Esdras", 10},
-		{"Neemias", 13}, {"Ester", 10}, {"Jó", 42},
-		{"Eclesiastes", 12}, {"Cantares", 8}, {"Isaías", 66}, {"Jeremias", 52}, {"Lamentações", 5},
-		{"Ezequiel", 48}, {"Daniel", 12}, {"Oséias", 14}, {"Joel", 3}, {"Amós", 9},
-		{"Obadias", 1}, {"Jonas", 4}, {"Miquéias", 7}, {"Naum", 3}, {"Habacuque", 3},
-		{"Sofonias", 3}, {"Ageu", 2}, {"Zacarias", 14}, {"Malaquias", 4},
-	}
-
-	// Novo Testamento
-	newTestamentBooks := []struct {
-		name     string
-		chapters int
-	}{
-		{"Mateus", 28}, {"Marcos", 16}, {"Lucas", 24}, {"João", 21}, {"Atos", 28},
-		{"Romanos", 16}, {"1 Coríntios", 16}, {"2 Coríntios", 13}, {"Gálatas", 6}, {"Efésios", 6},
-		{"Filipenses", 4}, {"Colossenses", 4}, {"1 Tessalonicenses", 5}, {"2 Tessalonicenses", 3}, {"1 Timóteo", 6},
-		{"2 Timóteo", 4}, {"Tito", 3}, {"Filemom", 1}, {"Hebreus", 13}, {"Tiago", 5},
-		{"1 Pedro", 5}, {"2 Pedro", 3}, {"1 João", 5}, {"2 João", 1}, {"3 João", 1},
-		{"Judas", 1}, {"Apocalipse", 22},
-	}
-
-	// Calcular total de capítulos
-	totalOTChapters := 0
-	for _, book := range oldTestamentBooks {
-		totalOTChapters += book.chapters
-	}
-
-	totalNTChapters := 0
-	for _, book := range newTestamentBooks {
-		totalNTChapters += book.chapters
-	}
-
-	// Distribuir capítulos ao longo de 365 dias
-	// Manhã: AT sequencial + Salmos sequencial
-	// Noite: NT sequencial + Provérbios sequencial
-	otChaptersPerDay := float64(totalOTChapters) / 365.0
-	ntChaptersPerDay := float64(totalNTChapters) / 365.0
-
-	// Contadores para distribuição sequencial
-	otBookIndex := 0
-	otChapter := 1
-	otAccumulator := 0.0
-
-	ntBookIndex := 0
-	ntChapter := 1
-	ntAccumulator := 0.0
-
+	// Processar cada dia
 	for day := 1; day <= 365; day++ {
-		var oldTestamentRef string
-		var newTestamentRef string
-		var psalmsRef string
-		var proverbsRef string
+		rmmDay, exists := rmmPlan[day]
+		if !exists {
+			log.Printf("Warning: No RMM plan found for day %d", day)
+			continue
+		}
 
-		// MANHÃ: Antigo Testamento (sequencial)
-		otAccumulator += otChaptersPerDay
-		chaptersToRead := int(otAccumulator)
-		otAccumulator -= float64(chaptersToRead)
-
-		oldTestamentRef = consumeChapters(oldTestamentBooks, &otBookIndex, &otChapter, chaptersToRead)
-
-		// MANHÃ: Salmos (sequencial, reinicia quando terminar)
-		// Calcular baseado no dia do ano: (day - 1) % 150 + 1
-		psalmDay := ((day - 1) % 150) + 1
-		psalmsRef = fmt.Sprintf("Salmos %d", psalmDay)
-
-		// NOITE: Novo Testamento (sequencial)
-		ntAccumulator += ntChaptersPerDay
-		ntChaptersToRead := int(ntAccumulator)
-		ntAccumulator -= float64(ntChaptersToRead)
-
-		newTestamentRef = consumeChapters(newTestamentBooks, &ntBookIndex, &ntChapter, ntChaptersToRead)
-
-		// NOITE: Provérbios (sequencial, reinicia quando terminar)
-		// Calcular baseado no dia do ano: (day - 1) % 31 + 1
-		proverbDay := ((day - 1) % 31) + 1
-		proverbsRef = fmt.Sprintf("Provérbios %d", proverbDay)
+		// Mapear para estrutura híbrida
+		oldTestamentRef, psalmsRef, newTestamentRef, proverbsRef := mapRMMToHybrid(rmmDay)
 
 		plan := &models.ReadingPlan{
 			DayOfYear:       day,

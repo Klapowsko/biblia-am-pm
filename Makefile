@@ -65,7 +65,7 @@ logs: ## Mostra logs de todos os containers
 # Banco de dados
 populate: ## Popula o banco de dados com o plano de leitura (desenvolvimento)
 	@echo "$(GREEN)Populating database with reading plan...$(NC)"
-	docker compose $(DEV_PROFILE) exec backend go run cmd/populate/main.go
+	docker compose $(DEV_PROFILE) exec backend sh -c "cd cmd/populate && go run ."
 
 populate-prod: ## Popula o banco de dados com o plano de leitura (produção)
 	@echo "$(GREEN)Populating production database with reading plan...$(NC)"
@@ -86,7 +86,7 @@ populate-prod: ## Popula o banco de dados com o plano de leitura (produção)
 		-e DB_PASSWORD=$${DB_PASSWORD:-postgres} \
 		-e DB_NAME=$${DB_NAME:-biblia_db} \
 		golang:alpine \
-		sh -c "go mod download && go run cmd/populate/main.go"
+		sh -c "go mod download && cd cmd/populate && go run ."
 
 # Limpeza
 clean: ## Remove containers, volumes e imagens não utilizadas

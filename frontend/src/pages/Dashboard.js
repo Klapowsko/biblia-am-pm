@@ -147,102 +147,80 @@ const Dashboard = () => {
         {error && <div className="error-message">{error}</div>}
 
         <div className="readings-grid">
-          {/* MANHÃ: Antigo Testamento + Salmos (sempre) */}
-          {(period === 'morning' || period === 'all') && (
-            <>
-              <div className="reading-card">
-                <h3>Antigo Testamento</h3>
-                {readingPlan?.old_testament_ref ? (
-                  <>
-                    <p className="reading-ref">{readingPlan.old_testament_ref}</p>
-                    <button
-                      className={`btn ${
-                        progress?.morning_completed ? 'btn-success' : 'btn-primary'
-                      }`}
-                      onClick={() => markAsCompleted('morning')}
-                      disabled={marking || progress?.morning_completed}
-                    >
-                      {progress?.morning_completed
-                        ? '✓ Concluído'
-                        : 'Marcar como lido'}
-                    </button>
-                  </>
-                ) : (
-                  <p className="no-reading">Sem leitura para hoje</p>
-                )}
-              </div>
-
-              <div className="reading-card">
-                <h3>Salmos</h3>
-                {readingPlan?.psalms_ref ? (
-                  <>
-                    <p className="reading-ref">{readingPlan.psalms_ref}</p>
-                    <button
-                      className={`btn ${
-                        progress?.morning_completed ? 'btn-success' : 'btn-primary'
-                      }`}
-                      onClick={() => markAsCompleted('morning')}
-                      disabled={marking || progress?.morning_completed}
-                    >
-                      {progress?.morning_completed
-                        ? '✓ Concluído'
-                        : 'Marcar como lido'}
-                    </button>
-                  </>
-                ) : (
-                  <p className="no-reading">Sem leitura para hoje</p>
-                )}
-              </div>
-            </>
+          {/* MANHÃ: Antigo Testamento */}
+          {(period === 'morning' || period === 'all') && readingPlan?.old_testament_ref && (
+            <div className="reading-card">
+              <h3>Antigo Testamento</h3>
+              <p className="reading-ref">{readingPlan.old_testament_ref}</p>
+              <button
+                className={`btn ${
+                  progress?.morning_completed ? 'btn-success' : 'btn-primary'
+                }`}
+                onClick={() => markAsCompleted('morning')}
+                disabled={marking || progress?.morning_completed}
+              >
+                {progress?.morning_completed
+                  ? '✓ Concluído'
+                  : 'Marcar como lido'}
+              </button>
+            </div>
           )}
 
-          {/* NOITE: Novo Testamento + Provérbios (sempre) */}
-          {(period === 'evening' || period === 'all') && (
-            <>
-              <div className="reading-card">
-                <h3>Novo Testamento</h3>
-                {readingPlan?.new_testament_ref ? (
-                  <>
-                    <p className="reading-ref">{readingPlan.new_testament_ref}</p>
-                    <button
-                      className={`btn ${
-                        progress?.evening_completed ? 'btn-success' : 'btn-primary'
-                      }`}
-                      onClick={() => markAsCompleted('evening')}
-                      disabled={marking || progress?.evening_completed}
-                    >
-                      {progress?.evening_completed
-                        ? '✓ Concluído'
-                        : 'Marcar como lido'}
-                    </button>
-                  </>
-                ) : (
-                  <p className="no-reading">Sem leitura para hoje</p>
-                )}
-              </div>
+          {/* Salmos - apenas se houver leitura */}
+          {readingPlan?.psalms_ref && (
+            <div className="reading-card">
+              <h3>Salmos</h3>
+              <p className="reading-ref">{readingPlan.psalms_ref}</p>
+              <button
+                className={`btn ${
+                  progress?.morning_completed ? 'btn-success' : 'btn-primary'
+                }`}
+                onClick={() => markAsCompleted('morning')}
+                disabled={marking || progress?.morning_completed}
+              >
+                {progress?.morning_completed
+                  ? '✓ Concluído'
+                  : 'Marcar como lido'}
+              </button>
+            </div>
+          )}
 
-              <div className="reading-card">
-                <h3>Provérbios</h3>
-                {readingPlan?.proverbs_ref ? (
-                  <>
-                    <p className="reading-ref">{readingPlan.proverbs_ref}</p>
-                    <button
-                      className={`btn ${
-                        progress?.evening_completed ? 'btn-success' : 'btn-primary'
-                      }`}
-                      onClick={() => markAsCompleted('evening')}
-                      disabled={marking || progress?.evening_completed}
-                    >
-                      {progress?.evening_completed
-                        ? '✓ Concluído'
-                        : 'Marcar como lido'}
-                    </button>
-                  </>
-                ) : (
-                  <p className="no-reading">Sem leitura para hoje</p>
-                )}
-              </div>
-            </>
+          {/* NOITE: Novo Testamento */}
+          {(period === 'evening' || period === 'all') && readingPlan?.new_testament_ref && (
+            <div className="reading-card">
+              <h3>Novo Testamento</h3>
+              <p className="reading-ref">{readingPlan.new_testament_ref}</p>
+              <button
+                className={`btn ${
+                  progress?.evening_completed ? 'btn-success' : 'btn-primary'
+                }`}
+                onClick={() => markAsCompleted('evening')}
+                disabled={marking || progress?.evening_completed}
+              >
+                {progress?.evening_completed
+                  ? '✓ Concluído'
+                  : 'Marcar como lido'}
+              </button>
+            </div>
+          )}
+
+          {/* Provérbios - apenas se houver leitura */}
+          {readingPlan?.proverbs_ref && (
+            <div className="reading-card">
+              <h3>Provérbios</h3>
+              <p className="reading-ref">{readingPlan.proverbs_ref}</p>
+              <button
+                className={`btn ${
+                  progress?.evening_completed ? 'btn-success' : 'btn-primary'
+                }`}
+                onClick={() => markAsCompleted('evening')}
+                disabled={marking || progress?.evening_completed}
+              >
+                {progress?.evening_completed
+                  ? '✓ Concluído'
+                  : 'Marcar como lido'}
+              </button>
+            </div>
           )}
         </div>
 
