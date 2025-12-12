@@ -147,10 +147,10 @@ const Dashboard = () => {
         {error && <div className="error-message">{error}</div>}
 
         <div className="readings-grid">
-          {/* MANHÃ: Antigo Testamento */}
+          {/* MANHÃ: Leituras (AT + NT) */}
           {(period === 'morning' || period === 'all') && readingPlan?.old_testament_ref && (
             <div className="reading-card">
-              <h3>Antigo Testamento</h3>
+              <h3>Leituras da Manhã</h3>
               <p className="reading-ref">{readingPlan.old_testament_ref}</p>
               <button
                 className={`btn ${
@@ -185,10 +185,10 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* NOITE: Novo Testamento */}
+          {/* NOITE: Leituras (AT + NT) */}
           {(period === 'evening' || period === 'all') && readingPlan?.new_testament_ref && (
             <div className="reading-card">
-              <h3>Novo Testamento</h3>
+              <h3>Leituras da Noite</h3>
               <p className="reading-ref">{readingPlan.new_testament_ref}</p>
               <button
                 className={`btn ${

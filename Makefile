@@ -86,7 +86,7 @@ populate-prod: ## Popula o banco de dados com o plano de leitura (produção)
 		-e DB_PASSWORD=$${DB_PASSWORD:-postgres} \
 		-e DB_NAME=$${DB_NAME:-biblia_db} \
 		golang:alpine \
-		sh -c "go mod download && cd cmd/populate && go run ."
+		sh -c "apk add --no-cache git && go mod download && cd cmd/populate && go run ."
 
 # Limpeza
 clean: ## Remove containers, volumes e imagens não utilizadas

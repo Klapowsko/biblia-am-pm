@@ -56,6 +56,8 @@ func isProverbs(ref string) bool {
 }
 
 // mapRMMToHybrid mapeia as 4 leituras do RMM para a estrutura híbrida (manhã/noite)
+// Manhã: 1 leitura do AT + 1 leitura do NT + Salmos (se houver)
+// Noite: 1 leitura do AT + 1 leitura do NT + Provérbios (se houver)
 func mapRMMToHybrid(rmmDay RMMDay) (oldTestamentRef, psalmsRef, newTestamentRef, proverbsRef string) {
 	var otReadings []string
 	var ntReadings []string
@@ -81,13 +83,48 @@ func mapRMMToHybrid(rmmDay RMMDay) (oldTestamentRef, psalmsRef, newTestamentRef,
 		}
 	}
 
-	// Agrupar leituras
-	oldTestamentRef = strings.Join(otReadings, "; ")
+	// Distribuir leituras de forma equilibrada:
+	// Manhã: primeira leitura do AT + primeira leitura do NT
+	// Noite: segunda leitura do AT + segunda leitura do NT
+
+	var morningOT, eveningOT string
+	var morningNT, eveningNT string
+
+	if len(otReadings) > 0 {
+		morningOT = otReadings[0]
+	}
+	if len(otReadings) > 1 {
+		eveningOT = otReadings[1]
+	}
+
+	if len(ntReadings) > 0 {
+		morningNT = ntReadings[0]
+	}
+	if len(ntReadings) > 1 {
+		eveningNT = ntReadings[1]
+	}
+
+	// Manhã: AT + NT (agrupados)
+	var morningReadings []string
+	if morningOT != "" {
+		morningReadings = append(morningReadings, morningOT)
+	}
+	if morningNT != "" {
+		morningReadings = append(morningReadings, morningNT)
+	}
+	oldTestamentRef = strings.Join(morningReadings, "; ")
+
+	// Noite: AT + NT (agrupados)
+	var eveningReadings []string
+	if eveningOT != "" {
+		eveningReadings = append(eveningReadings, eveningOT)
+	}
+	if eveningNT != "" {
+		eveningReadings = append(eveningReadings, eveningNT)
+	}
+	newTestamentRef = strings.Join(eveningReadings, "; ")
+
 	psalmsRef = psalmsReading
-
-	// Agrupar todas as leituras do NT (assim como fazemos com o AT)
-	newTestamentRef = strings.Join(ntReadings, "; ")
-
 	proverbsRef = proverbsReading
 
 	return oldTestamentRef, psalmsRef, newTestamentRef, proverbsRef
