@@ -64,12 +64,12 @@ func mapRMMToHybrid(rmmDay RMMDay) (oldTestamentRef, psalmsRef, newTestamentRef,
 
 	// Analisar cada leitura
 	readings := []string{rmmDay.Reading1, rmmDay.Reading2, rmmDay.Reading3, rmmDay.Reading4}
-	
+
 	for _, reading := range readings {
 		if reading == "" {
 			continue
 		}
-		
+
 		if isPsalms(reading) {
 			psalmsReading = reading
 		} else if isProverbs(reading) {
@@ -83,18 +83,10 @@ func mapRMMToHybrid(rmmDay RMMDay) (oldTestamentRef, psalmsRef, newTestamentRef,
 
 	// Agrupar leituras
 	oldTestamentRef = strings.Join(otReadings, "; ")
-	if oldTestamentRef == "" {
-		oldTestamentRef = ""
-	}
-
 	psalmsRef = psalmsReading
 
-	// Para NT, usar a primeira leitura encontrada (geralmente Reading2)
-	if len(ntReadings) > 0 {
-		newTestamentRef = ntReadings[0]
-	} else {
-		newTestamentRef = ""
-	}
+	// Agrupar todas as leituras do NT (assim como fazemos com o AT)
+	newTestamentRef = strings.Join(ntReadings, "; ")
 
 	proverbsRef = proverbsReading
 
