@@ -4,7 +4,7 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import './Progress.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 const Progress = () => {
   const [progress, setProgress] = useState([]);

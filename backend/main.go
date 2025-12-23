@@ -33,26 +33,34 @@ func main() {
 
 	// CORS middleware
 	config := cors.DefaultConfig()
-	// Get allowed origins from environment or use defaults
-	allowedOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
-	if allowedOrigins == "" {
-		// Default origins: localhost and common server domains
+	allowedOrigins := strings.TrimSpace(os.Getenv("CORS_ALLOWED_ORIGINS"))
+	switch {
+	case allowedOrigins == "":
+		// Defaults: dev hosts + produção
 		config.AllowOrigins = []string{
 			"http://localhost:3001",
 			"http://hiagoserver.local:3001",
 			"http://hiagoserver.local",
+			"https://bibliampm-api.klapowsko.com",
+			"https://bibliampm.klapowsko.com",
 		}
-	} else {
-		// Parse comma-separated origins from environment
+	case allowedOrigins == "*":
+		// Permite tudo (sem credentials)
+		config.AllowAllOrigins = true
+	default:
 		origins := []string{}
 		for _, origin := range strings.Split(allowedOrigins, ",") {
-			origins = append(origins, strings.TrimSpace(origin))
+			trimmed := strings.TrimSpace(origin)
+			if trimmed != "" {
+				origins = append(origins, trimmed)
+			}
 		}
 		config.AllowOrigins = origins
 	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Content-Type", "Authorization", "X-Requested-With"}
-	config.AllowCredentials = true
+	// Credenciais só quando não é wildcard
+	config.AllowCredentials = !config.AllowAllOrigins
 	r.Use(cors.New(config))
 
 	// Health check
@@ -87,7 +95,6 @@ func main() {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
-
 
 func runMigrations() error {
 	migrationSQL := `
@@ -130,4 +137,3 @@ func runMigrations() error {
 	_, err := database.DB.Exec(migrationSQL)
 	return err
 }
-
