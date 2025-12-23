@@ -113,8 +113,19 @@
   z-index: 1;
 }
 
+.plan-name {
+  margin: 8px 0 0 0;
+  color: var(--brown-600);
+  font-size: 15px;
+  font-weight: 600;
+  font-style: italic;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.3px;
+}
+
 .day-info {
-  margin: 0;
+  margin: 8px 0 0 0;
   color: var(--text-secondary);
   font-size: 16px;
   font-weight: 500;

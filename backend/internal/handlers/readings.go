@@ -25,10 +25,11 @@ func NewReadingsHandler() *ReadingsHandler {
 }
 
 type TodayReadingsResponse struct {
-	Period      string                  `json:"period"`
-	Readings    *models.ReadingPlan     `json:"readings"`
-	Progress    *models.UserProgress    `json:"progress"`
-	DayOfYear   int                     `json:"day_of_year"`
+	Period    string               `json:"period"`
+	Readings  *models.ReadingPlan  `json:"readings"`
+	Progress  *models.UserProgress `json:"progress"`
+	DayOfYear int                  `json:"day_of_year"`
+	PlanName  string               `json:"plan_name"`
 }
 
 type MarkCompletedRequest struct {
@@ -100,11 +101,11 @@ func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
 	// If no progress exists, create a new one
 	if progress == nil {
 		progress = &models.UserProgress{
-			UserID:            userID,
-			ReadingPlanID:     plan.ID,
-			Date:              now,
-			MorningCompleted:  false,
-			EveningCompleted:  false,
+			UserID:           userID,
+			ReadingPlanID:    plan.ID,
+			Date:             now,
+			MorningCompleted: false,
+			EveningCompleted: false,
 		}
 	}
 
@@ -113,6 +114,7 @@ func (h *ReadingsHandler) GetTodayReadings(c *gin.Context) {
 		Readings:  plan,
 		Progress:  progress,
 		DayOfYear: dayOfYear,
+		PlanName:  "Robert Murray M'Cheyne",
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -160,11 +162,11 @@ func (h *ReadingsHandler) MarkCompleted(c *gin.Context) {
 
 	if progress == nil {
 		progress = &models.UserProgress{
-			UserID:            userID,
-			ReadingPlanID:     plan.ID,
-			Date:              now,
-			MorningCompleted:  false,
-			EveningCompleted:  false,
+			UserID:           userID,
+			ReadingPlanID:    plan.ID,
+			Date:             now,
+			MorningCompleted: false,
+			EveningCompleted: false,
 		}
 	}
 
@@ -200,4 +202,3 @@ func (h *ReadingsHandler) GetProgress(c *gin.Context) {
 
 	c.JSON(http.StatusOK, progresses)
 }
-

@@ -141,6 +141,7 @@ const Dashboard = () => {
         <div className="period-banner">
           <span className="period-icon">{getPeriodIcon(period)}</span>
           <h2>Leituras de {getPeriodLabel(period)}</h2>
+          <p className="plan-name">Plano: {readings?.plan_name || "Robert Murray M'Cheyne"}</p>
           <p className="day-info">Dia {readings?.day_of_year} de 365</p>
         </div>
 
