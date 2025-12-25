@@ -296,24 +296,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="progress-summary">
-          <h3>Resumo do Dia</h3>
-          <div className="progress-items">
-            <div className="progress-item">
-              <span>Manhã:</span>
-              <span className={progress?.morning_completed ? 'completed' : 'pending'}>
-                {progress?.morning_completed ? '✓ Concluído' : 'Pendente'}
-              </span>
-            </div>
-            <div className="progress-item">
-              <span>Noite:</span>
-              <span className={progress?.evening_completed ? 'completed' : 'pending'}>
-                {progress?.evening_completed ? '✓ Concluído' : 'Pendente'}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* Catecismo Section */}
         <div className="catechism-section">
           <div className="catechism-header">
