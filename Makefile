@@ -81,45 +81,11 @@ populate-prod: populate-reading-plan-prod populate-catechism-prod ## Popula o ba
 
 populate-reading-plan-prod: ## Popula o banco de dados com o plano de leitura (produção)
 	@echo "$(GREEN)Populating production database with reading plan...$(NC)"
-	@NETWORK=$$(docker inspect biblia_postgres --format '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' 2>/dev/null | head -1 || docker network ls --filter name=biblia --format '{{.Name}}' | grep network | head -1 || echo "biblia-am-pm_biblia-network"); \
-	echo "$(YELLOW)Using network: $$NETWORK$(NC)"; \
-	if ! docker network inspect $$NETWORK >/dev/null 2>&1; then \
-		echo "$(YELLOW)Network $$NETWORK not found. Make sure containers are running with 'make prod'$(NC)"; \
-		exit 1; \
-	fi; \
-	docker run --rm \
-		--network $$NETWORK \
-		-v $$(pwd)/backend:/app \
-		-w /app \
-		--env-file backend/.env 2>/dev/null || true \
-		-e DB_HOST=postgres \
-		-e DB_PORT=$${DB_PORT:-5432} \
-		-e DB_USER=$${DB_USER:-postgres} \
-		-e DB_PASSWORD=$${DB_PASSWORD:-postgres} \
-		-e DB_NAME=$${DB_NAME:-biblia_db} \
-		golang:alpine \
-		sh -c "apk add --no-cache git && go mod download && cd cmd/populate && go run ."
+	docker compose $(PROD_PROFILE) run --rm go-runner sh -c "apk add --no-cache git && go mod download && cd cmd/populate && go run ."
 
 populate-catechism-prod: ## Popula o banco de dados com o Catecismo de Westminster (produção)
 	@echo "$(GREEN)Populating production database with Westminster Catechism...$(NC)"
-	@NETWORK=$$(docker inspect biblia_postgres --format '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' 2>/dev/null | head -1 || docker network ls --filter name=biblia --format '{{.Name}}' | grep network | head -1 || echo "biblia-am-pm_biblia-network"); \
-	echo "$(YELLOW)Using network: $$NETWORK$(NC)"; \
-	if ! docker network inspect $$NETWORK >/dev/null 2>&1; then \
-		echo "$(YELLOW)Network $$NETWORK not found. Make sure containers are running with 'make prod'$(NC)"; \
-		exit 1; \
-	fi; \
-	docker run --rm \
-		--network $$NETWORK \
-		-v $$(pwd)/backend:/app \
-		-w /app \
-		--env-file backend/.env 2>/dev/null || true \
-		-e DB_HOST=postgres \
-		-e DB_PORT=$${DB_PORT:-5432} \
-		-e DB_USER=$${DB_USER:-postgres} \
-		-e DB_PASSWORD=$${DB_PASSWORD:-postgres} \
-		-e DB_NAME=$${DB_NAME:-biblia_db} \
-		golang:alpine \
-		sh -c "apk add --no-cache git && go mod download && cd cmd/populate-catechism && go run ."
+	docker compose $(PROD_PROFILE) run --rm go-runner sh -c "apk add --no-cache git && go mod download && cd cmd/populate-catechism && go run ."
 
 # Limpeza
 clean: ## Remove containers, volumes e imagens não utilizadas
