@@ -347,6 +347,175 @@
   font-weight: 500;
 }
 
+/* Catechism Section */
+.catechism-section {
+  margin-top: 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.catechism-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.catechism-header h2 {
+  font-family: 'Playfair Display', serif;
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.catechism-info {
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.catechism-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.catechism-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-brown);
+  background-size: 200% 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.catechism-card:hover::before {
+  transform: scaleX(1);
+}
+
+.catechism-question {
+  margin-bottom: 24px;
+}
+
+.catechism-question h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+
+.question-text {
+  font-size: 18px;
+  color: var(--text-primary);
+  line-height: 1.8;
+  font-weight: 500;
+  margin: 0;
+  padding: 20px;
+  background: var(--bg-overlay);
+  border-radius: 12px;
+  border-left: 4px solid var(--brown-400);
+}
+
+.catechism-answer {
+  margin-bottom: 24px;
+}
+
+.btn-toggle-answer {
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.btn-toggle-answer:hover {
+  background: var(--bg-white);
+  border-color: var(--brown-400);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.answer-content {
+  padding: 20px;
+  background: var(--bg-overlay);
+  border-radius: 12px;
+  border-left: 4px solid var(--brown-500);
+  margin-top: 12px;
+}
+
+.answer-content p {
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.catechism-progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: var(--bg-overlay);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+}
+
+.week-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.progress-count {
+  font-weight: 600;
+  color: var(--brown-600);
+}
+
+.next-question-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.catechism-loading,
+.catechism-error {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 24px;
+}
+
+.catechism-error {
+  color: var(--error);
+  background: var(--error-light);
+  border-color: var(--error);
+}
+
 @media (max-width: 768px) {
   .readings-grid {
     grid-template-columns: 1fr;
@@ -403,5 +572,34 @@
 
   .progress-summary {
     padding: 24px;
+  }
+
+  .catechism-section {
+    margin-top: 32px;
+  }
+
+  .catechism-header h2 {
+    font-size: 24px;
+  }
+
+  .catechism-card {
+    padding: 24px;
+  }
+
+  .catechism-question h3 {
+    font-size: 20px;
+  }
+
+  .question-text {
+    font-size: 16px;
+    padding: 16px;
+  }
+
+  .answer-content {
+    padding: 16px;
+  }
+
+  .answer-content p {
+    font-size: 15px;
   }
 }

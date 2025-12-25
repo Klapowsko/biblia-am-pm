@@ -11,6 +11,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [marking, setMarking] = useState(false);
+  const [catechism, setCatechism] = useState(null);
+  const [catechismLoading, setCatechismLoading] = useState(true);
+  const [catechismError, setCatechismError] = useState('');
+  const [markingCatechism, setMarkingCatechism] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
   const { token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -37,6 +42,31 @@ const Dashboard = () => {
     }
   }, [token, logout, navigate]);
 
+  const fetchCatechism = useCallback(async () => {
+    try {
+      setCatechismLoading(true);
+      const response = await axios.get(`${API_URL}/catechism/current`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCatechism(response.data);
+      setCatechismError('');
+    } catch (err) {
+      console.error('Error fetching catechism:', err);
+      if (err.response?.status === 401) {
+        logout();
+        navigate('/login');
+      } else if (err.response?.status === 404) {
+        setCatechismError('Catecismo não populado. Por favor, popule o catecismo primeiro.');
+      } else {
+        setCatechismError('Erro ao carregar catecismo');
+      }
+    } finally {
+      setCatechismLoading(false);
+    }
+  }, [token, logout, navigate]);
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -44,7 +74,8 @@ const Dashboard = () => {
     }
 
     fetchTodayReadings();
-  }, [token, navigate, fetchTodayReadings]);
+    fetchCatechism();
+  }, [token, navigate, fetchTodayReadings, fetchCatechism]);
 
   const markAsCompleted = async (period) => {
     try {
@@ -69,6 +100,46 @@ const Dashboard = () => {
     } finally {
       setMarking(false);
     }
+  };
+
+  const markCatechismAsCompleted = async () => {
+    try {
+      setMarkingCatechism(true);
+      await axios.post(
+        `${API_URL}/catechism/mark-completed`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Refresh catechism data
+      await fetchCatechism();
+    } catch (err) {
+      setCatechismError('Erro ao marcar catecismo como concluído');
+    } finally {
+      setMarkingCatechism(false);
+    }
+  };
+
+  const getWeekProgressCount = () => {
+    if (!catechism?.week_progress) return 0;
+    return catechism.week_progress.filter(p => p.completed).length;
+  };
+
+  const isTodayCompleted = () => {
+    if (!catechism?.week_progress) return false;
+    const today = new Date().toISOString().split('T')[0];
+    const todayProgress = catechism.week_progress.find(p => {
+      // Handle both date string formats (YYYY-MM-DD or ISO string)
+      const progressDate = typeof p.date === 'string' 
+        ? p.date.split('T')[0] 
+        : new Date(p.date).toISOString().split('T')[0];
+      return progressDate === today;
+    });
+    return todayProgress?.completed || false;
   };
 
   const getPeriodLabel = (period) => {
@@ -241,6 +312,75 @@ const Dashboard = () => {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Catecismo Section */}
+        <div className="catechism-section">
+          <div className="catechism-header">
+            <h2>📜 Catecismo Menor de Westminster</h2>
+            {catechism && (
+              <p className="catechism-info">
+                Pergunta {catechism.question_number} de {catechism.total_questions}
+              </p>
+            )}
+          </div>
+
+          {catechismLoading && (
+            <div className="catechism-loading">
+              Carregando catecismo...
+            </div>
+          )}
+
+          {catechismError && !catechismLoading && (
+            <div className="catechism-error">
+              {catechismError}
+            </div>
+          )}
+
+          {catechism && !catechismLoading && (
+            <div className="catechism-card">
+              <div className="catechism-question">
+                <h3>Pergunta {catechism.question?.question_number}</h3>
+                <p className="question-text">{catechism.question?.question_text}</p>
+              </div>
+
+              <div className="catechism-answer">
+                <button
+                  className="btn-toggle-answer"
+                  onClick={() => setShowAnswer(!showAnswer)}
+                >
+                  {showAnswer ? 'Ocultar Resposta' : 'Mostrar Resposta'}
+                </button>
+                {showAnswer && (
+                  <div className="answer-content">
+                    <p>{catechism.question?.answer_text}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="catechism-progress-info">
+                <div className="week-progress">
+                  <span>Progresso da Semana:</span>
+                  <span className="progress-count">
+                    {getWeekProgressCount()} / 7 dias
+                  </span>
+                </div>
+                <div className="next-question-info">
+                  <span>Próxima pergunta em: {new Date(catechism.next_question_date).toLocaleDateString('pt-BR')}</span>
+                </div>
+              </div>
+
+              <button
+                className={`btn ${isTodayCompleted() ? 'btn-success' : 'btn-primary'}`}
+                onClick={markCatechismAsCompleted}
+                disabled={markingCatechism || isTodayCompleted()}
+              >
+                {isTodayCompleted()
+                  ? '✓ Lido hoje'
+                  : 'Marcar como lido hoje'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

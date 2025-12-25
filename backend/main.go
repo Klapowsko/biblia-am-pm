@@ -27,6 +27,7 @@ func main() {
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler()
 	readingsHandler := handlers.NewReadingsHandler()
+	catechismHandler := handlers.NewCatechismHandler()
 
 	// Setup Gin router
 	r := gin.Default()
@@ -83,6 +84,12 @@ func main() {
 		protected.GET("/readings/today", readingsHandler.GetTodayReadings)
 		protected.POST("/readings/mark-completed", readingsHandler.MarkCompleted)
 		protected.GET("/progress", readingsHandler.GetProgress)
+		
+		// Catechism routes
+		protected.GET("/catechism/current", catechismHandler.GetCurrentQuestion)
+		protected.POST("/catechism/mark-completed", catechismHandler.MarkAsCompleted)
+		protected.GET("/catechism/progress", catechismHandler.GetProgress)
+		protected.POST("/catechism/populate", catechismHandler.PopulateCatechism)
 	}
 
 	port := os.Getenv("API_PORT")
@@ -132,6 +139,31 @@ func runMigrations() error {
 	CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id);
 	CREATE INDEX IF NOT EXISTS idx_user_progress_date ON user_progress(date);
 	CREATE INDEX IF NOT EXISTS idx_reading_plans_day_of_year ON reading_plans(day_of_year);
+
+	-- Create westminster_catechism table
+	CREATE TABLE IF NOT EXISTS westminster_catechism (
+		id SERIAL PRIMARY KEY,
+		question_number INTEGER NOT NULL UNIQUE,
+		question_text TEXT NOT NULL,
+		answer_text TEXT NOT NULL
+	);
+
+	-- Create catechism_progress table
+	CREATE TABLE IF NOT EXISTS catechism_progress (
+		id SERIAL PRIMARY KEY,
+		user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		question_id INTEGER NOT NULL REFERENCES westminster_catechism(id) ON DELETE CASCADE,
+		date DATE NOT NULL,
+		completed BOOLEAN DEFAULT FALSE,
+		completed_at TIMESTAMP,
+		UNIQUE(user_id, question_id, date)
+	);
+
+	-- Create indexes for catechism tables
+	CREATE INDEX IF NOT EXISTS idx_catechism_progress_user_id ON catechism_progress(user_id);
+	CREATE INDEX IF NOT EXISTS idx_catechism_progress_date ON catechism_progress(date);
+	CREATE INDEX IF NOT EXISTS idx_catechism_progress_question_id ON catechism_progress(question_id);
+	CREATE INDEX IF NOT EXISTS idx_westminster_catechism_question_number ON westminster_catechism(question_number);
 	`
 
 	_, err := database.DB.Exec(migrationSQL)
