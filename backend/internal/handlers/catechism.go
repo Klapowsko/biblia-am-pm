@@ -57,7 +57,7 @@ func getWeekStart(date time.Time) time.Time {
 
 // getCurrentQuestionNumber calculates which question should be active this week
 // Based on the number of weeks since a reference date (first Sunday of 2024)
-func getCurrentQuestionNumber(now time.Time) int {
+func getCurrentQuestionNumber(now time.Time, totalQuestions int) int {
 	// Reference date: First Sunday of 2024 (January 7, 2024)
 	referenceDate := time.Date(2024, 1, 7, 0, 0, 0, 0, now.Location())
 	
@@ -67,14 +67,14 @@ func getCurrentQuestionNumber(now time.Time) int {
 	// Calculate weeks since reference
 	weeksSinceReference := int(currentWeekStart.Sub(referenceDate).Hours() / 24 / 7)
 	
-	// Calculate question number (1-107, cycling)
-	questionNumber := (weeksSinceReference % 107) + 1
+	// Calculate question number (1-totalQuestions, cycling)
+	questionNumber := (weeksSinceReference % totalQuestions) + 1
 	
-	// Ensure it's between 1 and 107
+	// Ensure it's between 1 and totalQuestions
 	if questionNumber < 1 {
-		questionNumber = 107
+		questionNumber = totalQuestions
 	}
-	if questionNumber > 107 {
+	if questionNumber > totalQuestions {
 		questionNumber = 1
 	}
 	
@@ -98,8 +98,15 @@ func (h *CatechismHandler) GetCurrentQuestion(c *gin.Context) {
 		return
 	}
 
+	// Get total number of questions from database
+	totalQuestions, err := h.catechismRepo.GetMaxQuestionNumber()
+	if err != nil || totalQuestions == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get total questions. Please populate the catechism first."})
+		return
+	}
+
 	now := getLocalTimeForCatechism()
-	questionNumber := getCurrentQuestionNumber(now)
+	questionNumber := getCurrentQuestionNumber(now, totalQuestions)
 	
 	// Get the question
 	question, err := h.catechismRepo.GetByQuestionNumber(questionNumber)
@@ -132,7 +139,7 @@ func (h *CatechismHandler) GetCurrentQuestion(c *gin.Context) {
 		WeekEnd:          weekEnd.Format("2006-01-02"),
 		NextQuestionDate: nextQuestionDate.Format("2006-01-02"),
 		QuestionNumber:   questionNumber,
-		TotalQuestions:   107,
+		TotalQuestions:   totalQuestions,
 	}
 	
 	c.JSON(http.StatusOK, response)
@@ -155,6 +162,13 @@ func (h *CatechismHandler) MarkAsCompleted(c *gin.Context) {
 		return
 	}
 
+	// Get total number of questions from database
+	totalQuestions, err := h.catechismRepo.GetMaxQuestionNumber()
+	if err != nil || totalQuestions == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get total questions. Please populate the catechism first."})
+		return
+	}
+
 	now := getLocalTimeForCatechism()
 	var targetDate time.Time
 	
@@ -169,7 +183,7 @@ func (h *CatechismHandler) MarkAsCompleted(c *gin.Context) {
 		targetDate = now
 	}
 	
-	questionNumber := getCurrentQuestionNumber(targetDate)
+	questionNumber := getCurrentQuestionNumber(targetDate, totalQuestions)
 	
 	// Get the question
 	question, err := h.catechismRepo.GetByQuestionNumber(questionNumber)

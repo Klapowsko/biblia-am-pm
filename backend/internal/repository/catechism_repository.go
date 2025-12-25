@@ -90,3 +90,23 @@ func (r *CatechismRepository) CreateBatch(questions []*models.CatechismQuestion)
 	return nil
 }
 
+func (r *CatechismRepository) GetTotalCount() (int, error) {
+	query := `SELECT COUNT(*) FROM westminster_catechism`
+	var count int
+	err := database.DB.QueryRow(query).Scan(&count)
+	return count, err
+}
+
+func (r *CatechismRepository) GetMaxQuestionNumber() (int, error) {
+	query := `SELECT MAX(question_number) FROM westminster_catechism`
+	var maxNum sql.NullInt64
+	err := database.DB.QueryRow(query).Scan(&maxNum)
+	if err != nil {
+		return 0, err
+	}
+	if !maxNum.Valid {
+		return 0, nil
+	}
+	return int(maxNum.Int64), nil
+}
+

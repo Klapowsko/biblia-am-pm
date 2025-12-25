@@ -16,8 +16,10 @@ import (
 // OnlineCatechismItem estrutura para parsing do JSON online
 type OnlineCatechismItem struct {
 	Number int    `json:"number"`
-	Q      string `json:"q"` // Question
-	A      string `json:"a"` // Answer
+	Q      string `json:"q"` // Question (pode ser "question" também)
+	A      string `json:"a"` // Answer (pode ser "answer" também)
+	Question string `json:"question"` // Formato alternativo
+	Answer   string `json:"answer"`   // Formato alternativo
 }
 
 func main() {
@@ -47,10 +49,14 @@ func main() {
 	var body []byte
 
 	// Tentar múltiplos caminhos possíveis (dependendo de onde o comando é executado)
+	// Prioriza Catecismo Maior, depois Menor
 	possiblePaths := []string{
-		"catechism.json",                             // Quando executado de dentro de cmd/populate-catechism
-		"cmd/populate-catechism/catechism.json",      // Quando executado da raiz do backend
-		"/app/cmd/populate-catechism/catechism.json", // Caminho absoluto no container
+		"catechism_maior.json",                             // Catecismo Maior - quando executado de dentro de cmd/populate-catechism
+		"cmd/populate-catechism/catechism_maior.json",      // Catecismo Maior - quando executado da raiz do backend
+		"/app/cmd/populate-catechism/catechism_maior.json", // Catecismo Maior - caminho absoluto no container
+		"catechism.json",                                    // Catecismo Menor (fallback)
+		"cmd/populate-catechism/catechism.json",             // Catecismo Menor (fallback)
+		"/app/cmd/populate-catechism/catechism.json",        // Catecismo Menor (fallback)
 	}
 
 	var localFile string
@@ -100,7 +106,7 @@ func main() {
 		}
 	}
 
-	log.Println("Populating Westminster Shorter Catechism (107 questions)...")
+	log.Println("Populating Westminster Catechism...")
 
 	// Parse JSON
 	var items []OnlineCatechismItem
@@ -115,23 +121,37 @@ func main() {
 	// Converter para nosso modelo e salvar
 	questions := make([]*models.CatechismQuestion, 0, len(items))
 	validCount := 0
+	maxQuestion := 0
 
 	for _, item := range items {
-		if item.Number >= 1 && item.Number <= 107 {
+		if item.Number >= 1 {
+			// Suporta ambos os formatos: "q"/"a" ou "question"/"answer"
+			questionText := item.Q
+			if questionText == "" {
+				questionText = item.Question
+			}
+			answerText := item.A
+			if answerText == "" {
+				answerText = item.Answer
+			}
+			
 			questions = append(questions, &models.CatechismQuestion{
 				QuestionNumber: item.Number,
-				QuestionText:   strings.TrimSpace(item.Q),
-				AnswerText:     strings.TrimSpace(item.A),
+				QuestionText:   strings.TrimSpace(questionText),
+				AnswerText:     strings.TrimSpace(answerText),
 			})
 			validCount++
+			if item.Number > maxQuestion {
+				maxQuestion = item.Number
+			}
 		}
 	}
 
 	if validCount == 0 {
-		log.Fatalf("No valid questions found (expected 1-107)")
+		log.Fatalf("No valid questions found")
 	}
 
-	log.Printf("Found %d valid questions, saving to database...", validCount)
+	log.Printf("Found %d valid questions (1-%d), saving to database...", validCount, maxQuestion)
 
 	// Salvar no banco de dados
 	for i, question := range questions {
@@ -146,11 +166,5 @@ func main() {
 	}
 
 	log.Printf("✅ Successfully populated %d questions!", validCount)
-
-	// Verificar se todas as 107 perguntas foram salvas
-	if validCount < 107 {
-		log.Printf("⚠️  Warning: Expected 107 questions but only found %d", validCount)
-	} else {
-		log.Println("✅ All 107 questions have been populated!")
-	}
+	log.Printf("✅ Questions range from 1 to %d", maxQuestion)
 }

@@ -299,7 +299,7 @@ const Dashboard = () => {
         {/* Catecismo Section */}
         <div className="catechism-section">
           <div className="catechism-header">
-            <h2>📜 Catecismo Menor de Westminster</h2>
+            <h2>📜 Catecismo Maior de Westminster</h2>
             {catechism && (
               <p className="catechism-info">
                 Pergunta {catechism.question_number} de {catechism.total_questions}
