@@ -81,11 +81,33 @@ populate-prod: populate-reading-plan-prod populate-catechism-prod ## Popula o ba
 
 populate-reading-plan-prod: ## Popula o banco de dados com o plano de leitura (produção)
 	@echo "$(GREEN)Populating production database with reading plan...$(NC)"
-	docker compose $(PROD_PROFILE) run --rm go-runner sh -c "apk add --no-cache git && go mod download && cd cmd/populate && go run ."
+	@NETWORK=$$(docker compose $(PROD_PROFILE) ps -q postgres 2>/dev/null | xargs -I {} docker inspect {} --format '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' 2>/dev/null | head -1 || echo "biblia-am-pm_biblia-network"); \
+	docker run --rm \
+		--network $$NETWORK \
+		-v $$(pwd)/backend:/app \
+		-w /app \
+		-e DB_HOST=postgres \
+		-e DB_PORT=$${DB_PORT:-5432} \
+		-e DB_USER=$${DB_USER:-postgres} \
+		-e DB_PASSWORD=$${DB_PASSWORD:-postgres} \
+		-e DB_NAME=$${DB_NAME:-biblia_db} \
+		golang:alpine \
+		sh -c "apk add --no-cache git && go mod download && cd cmd/populate && go run ."
 
 populate-catechism-prod: ## Popula o banco de dados com o Catecismo de Westminster (produção)
 	@echo "$(GREEN)Populating production database with Westminster Catechism...$(NC)"
-	docker compose $(PROD_PROFILE) run --rm go-runner sh -c "apk add --no-cache git && go mod download && cd cmd/populate-catechism && go run ."
+	@NETWORK=$$(docker compose $(PROD_PROFILE) ps -q postgres 2>/dev/null | xargs -I {} docker inspect {} --format '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' 2>/dev/null | head -1 || echo "biblia-am-pm_biblia-network"); \
+	docker run --rm \
+		--network $$NETWORK \
+		-v $$(pwd)/backend:/app \
+		-w /app \
+		-e DB_HOST=postgres \
+		-e DB_PORT=$${DB_PORT:-5432} \
+		-e DB_USER=$${DB_USER:-postgres} \
+		-e DB_PASSWORD=$${DB_PASSWORD:-postgres} \
+		-e DB_NAME=$${DB_NAME:-biblia_db} \
+		golang:alpine \
+		sh -c "apk add --no-cache git && go mod download && cd cmd/populate-catechism && go run ."
 
 # Limpeza
 clean: ## Remove containers, volumes e imagens não utilizadas
